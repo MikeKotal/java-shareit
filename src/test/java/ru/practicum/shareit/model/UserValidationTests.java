@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
 import java.util.Set;
@@ -19,11 +19,11 @@ class UserValidationTests {
 
 	@Autowired
 	private Validator validator;
-	private User user;
+	private UserDto user;
 
 	@BeforeEach
 	public void setUp() {
-		user = User.builder()
+		user = UserDto.builder()
 				.id(1L)
 				.name("Name")
 				.email("test@test.ru")
@@ -32,7 +32,7 @@ class UserValidationTests {
 
 	@Test
 	public void checkSuccessUserValidation() {
-		Set<ConstraintViolation<User>> result = validator.validate(user);
+		Set<ConstraintViolation<UserDto>> result = validator.validate(user);
 		assertTrue(result.isEmpty(), "Ошибки по валидации быть не должно");
 	}
 
@@ -55,10 +55,10 @@ class UserValidationTests {
 	}
 
 	private void checkAssert(String field, String errorMessage) {
-		List<ConstraintViolation<User>> result = List.copyOf(validator.validate(user));
+		List<ConstraintViolation<UserDto>> result = List.copyOf(validator.validate(user));
 		assertEquals(1, result.size(), "Отсутствует ошибка по валидации поля");
 
-		ConstraintViolation<User> validationResult = result.getFirst();
+		ConstraintViolation<UserDto> validationResult = result.getFirst();
 
 		assertEquals(field, validationResult.getPropertyPath().toString());
 		assertEquals(errorMessage, validationResult.getMessage());

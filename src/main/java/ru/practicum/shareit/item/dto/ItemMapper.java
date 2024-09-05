@@ -20,4 +20,15 @@ public class ItemMapper {
         log.info("ItemDto из маппера: {}", itemDto);
         return itemDto;
     }
+
+    public static Item mapToItem(ItemDto itemDto) {
+        log.info("ItemDto в маппер: {}", itemDto);
+        Item item = Item.builder()
+                .name(itemDto.getName())
+                .description(itemDto.getDescription())
+                .available(itemDto.getAvailable())
+                .build();
+        log.info("Item из маппера: {}", item);
+        return item;
+    }
 }

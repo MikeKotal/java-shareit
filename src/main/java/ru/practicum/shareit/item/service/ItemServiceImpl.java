@@ -24,13 +24,14 @@ public class ItemServiceImpl implements ItemService {
     private final UserRepository userRepository;
 
     @Override
-    public ItemDto createItem(Long ownerId, Item item) {
+    public ItemDto createItem(Long ownerId, ItemDto item) {
         log.info("Запрос от пользователя {} на создание вещи {}", ownerId, item);
+        Item newItem = ItemMapper.mapToItem(item);
         checkUserExists(ownerId);
-        item.setOwner(ownerId);
-        item = itemRepository.addItem(item);
-        log.info("Вещь успешно создана {}", item);
-        return ItemMapper.mapToItemDto(item);
+        newItem.setOwner(ownerId);
+        newItem = itemRepository.addItem(newItem);
+        log.info("Вещь успешно создана {}", newItem);
+        return ItemMapper.mapToItemDto(newItem);
     }
 
     @Override
@@ -68,7 +69,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto updateItem(Long ownerId, Long itemId, Item item) {
+    public ItemDto updateItem(Long ownerId, Long itemId, ItemDto item) {
         log.info("Запрос на обновление вещи с itemId {}", itemId);
         checkUserExists(ownerId);
         Item oldItem = getItemById(itemId);

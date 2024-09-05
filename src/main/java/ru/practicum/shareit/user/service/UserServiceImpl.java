@@ -17,11 +17,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDto createUser(User user) {
+    public UserDto createUser(UserDto user) {
         log.info("Запрос на создание пользователя {}", user);
-        user = userRepository.addUser(user);
-        log.info("Пользователь успешно создан {}", user);
-        return UserMapper.mapToUserDto(user);
+        User newUser = UserMapper.mapToUser(user);
+        newUser = userRepository.addUser(newUser);
+        log.info("Пользователь успешно создан {}", newUser);
+        return UserMapper.mapToUserDto(newUser);
     }
 
     @Override
@@ -33,7 +34,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto updateUser(Long id, User user) {
+    public UserDto updateUser(Long id, UserDto user) {
         log.info("Запрос на обновление пользователя с id {}", id);
         User oldUser = getUserById(id);
         if (user.getName() != null) {

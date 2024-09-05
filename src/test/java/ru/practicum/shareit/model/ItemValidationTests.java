@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.List;
 import java.util.Set;
@@ -19,22 +19,21 @@ public class ItemValidationTests {
 
     @Autowired
     private Validator validator;
-    private Item item;
+    private ItemDto item;
 
     @BeforeEach
     public void setUp() {
-        item = Item.builder()
+        item = ItemDto.builder()
                 .id(1L)
                 .name("Name")
                 .description("Description")
                 .available(Boolean.TRUE)
-                .owner(1L)
                 .build();
     }
 
     @Test
     public void checkSuccessItemValidation() {
-        Set<ConstraintViolation<Item>> result = validator.validate(item);
+        Set<ConstraintViolation<ItemDto>> result = validator.validate(item);
         assertTrue(result.isEmpty(), "Ошибки по валидации быть не должно");
     }
 
@@ -57,10 +56,10 @@ public class ItemValidationTests {
     }
 
     private void checkAssert(String field, String errorMessage) {
-        List<ConstraintViolation<Item>> result = List.copyOf(validator.validate(item));
+        List<ConstraintViolation<ItemDto>> result = List.copyOf(validator.validate(item));
         assertEquals(1, result.size(), "Отсутствует ошибка по валидации поля");
 
-        ConstraintViolation<Item> validationResult = result.getFirst();
+        ConstraintViolation<ItemDto> validationResult = result.getFirst();
 
         assertEquals(field, validationResult.getPropertyPath().toString());
         assertEquals(errorMessage, validationResult.getMessage());

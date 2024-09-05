@@ -19,4 +19,14 @@ public class UserMapper {
         log.info("UserDto из маппера: {}", userDto);
         return userDto;
     }
+
+    public static User mapToUser(UserDto userDto) {
+        log.info("UserDto в маппер: {}", userDto);
+        User user = User.builder()
+                .name(userDto.getName())
+                .email(userDto.getEmail())
+                .build();
+        log.info("User из маппера: {}", user);
+        return user;
+    }
 }
