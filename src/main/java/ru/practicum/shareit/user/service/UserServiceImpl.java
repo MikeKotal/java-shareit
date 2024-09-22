@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -12,15 +13,16 @@ import ru.practicum.shareit.user.model.User;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public UserDto createUser(UserDto user) {
         log.info("Запрос на создание пользователя {}", user);
-        User newUser = UserMapper.mapToUser(user);
-        newUser = userRepository.addUser(newUser);
+        User newUser = userRepository.save(UserMapper.mapToUser(user));
         log.info("Пользователь успешно создан {}", newUser);
         return UserMapper.mapToUserDto(newUser);
     }
@@ -34,6 +36,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDto updateUser(Long id, UserDto user) {
         log.info("Запрос на обновление пользователя с id {}", id);
         User oldUser = getUserById(id);
@@ -43,21 +46,22 @@ public class UserServiceImpl implements UserService {
         if (user.getEmail() != null) {
             oldUser.setEmail(user.getEmail());
         }
-        oldUser = userRepository.updateUser(oldUser);
+        oldUser = userRepository.save(oldUser);
         log.info("Пользователь {} успешно обновлен", oldUser);
         return UserMapper.mapToUserDto(oldUser);
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
         log.info("Запрос на удаление пользователя с id {}", id);
-        getUserById(id);
-        userRepository.removeUser(id);
+        User user = getUserById(id);
+        userRepository.delete(user);
         log.info("Пользователь с id {} удален", id);
     }
 
     private User getUserById(Long id) {
-        return userRepository.findUser(id)
+        return userRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Пользователь с id {} отсутствует", id);
                     return new NotFoundException(String.format("Пользователя с идентификатором = '%s' не найдено", id));
