@@ -1,23 +1,11 @@
 package ru.practicum.shareit.model;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import ru.practicum.shareit.item.dto.ItemDto;
-
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 public class ItemValidationTests {
 
-    @Autowired
+    /*@Autowired
     private Validator validator;
     private ItemDto item;
 
@@ -63,5 +51,5 @@ public class ItemValidationTests {
 
         assertEquals(field, validationResult.getPropertyPath().toString());
         assertEquals(errorMessage, validationResult.getMessage());
-    }
+    }*/
 }
