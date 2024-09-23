@@ -20,7 +20,7 @@ public class UserMapper {
         return userDto;
     }
 
-    public static User mapToUser(UserDto userDto) {
+    public static User mapToUser(UserRequestDto userDto) {
         log.info("UserDto в маппер: {}", userDto);
         User user = User.builder()
                 .name(userDto.getName())

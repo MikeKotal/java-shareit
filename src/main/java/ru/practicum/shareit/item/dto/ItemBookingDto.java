@@ -9,10 +9,21 @@ import java.util.List;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
-public class ItemDto {
+public class ItemBookingDto {
+
     private Long id;
+
     private String name;
+
     private String description;
+
     private Boolean available;
+
+    @JsonInclude
+    private String lastBooking;
+
+    @JsonInclude
+    private String nextBooking;
+
     private List<CommentDto> comments;
 }

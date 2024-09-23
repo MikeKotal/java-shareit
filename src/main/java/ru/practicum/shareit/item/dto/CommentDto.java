@@ -4,15 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Builder
-public class ItemDto {
+public class CommentDto {
     private Long id;
-    private String name;
-    private String description;
-    private Boolean available;
-    private List<CommentDto> comments;
+    private String text;
+    private String authorName;
+    private LocalDateTime created;
 }
