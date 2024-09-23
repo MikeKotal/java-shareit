@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserRequestDto;
 import ru.practicum.shareit.user.service.UserService;
 
 @RestController
@@ -25,7 +26,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto createUser(@Valid @RequestBody UserDto request) {
+    public UserDto createUser(@Valid @RequestBody UserRequestDto request) {
         return userService.createUser(request);
     }
 
@@ -35,7 +36,7 @@ public class UserController {
     }
 
     @PatchMapping("{id}")
-    public UserDto updateUser(@RequestBody UserDto request,
+    public UserDto updateUser(@RequestBody UserRequestDto request,
                               @PathVariable @Positive Long id) {
         return userService.updateUser(id, request);
     }

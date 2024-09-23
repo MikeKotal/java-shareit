@@ -15,8 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CommentRequestDto;
 import ru.practicum.shareit.item.dto.ItemBookingDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemRequestDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.List;
@@ -31,7 +33,7 @@ public class ItemController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") @Positive Long ownerId,
-                              @Valid @RequestBody ItemDto item) {
+                              @Valid @RequestBody ItemRequestDto item) {
         return itemService.createItem(ownerId, item);
     }
 
@@ -55,7 +57,7 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") @Positive Long ownerId,
                               @PathVariable @Positive Long itemId,
-                              @RequestBody ItemDto item) {
+                              @RequestBody ItemRequestDto item) {
         return itemService.updateItem(ownerId, itemId, item);
     }
 
@@ -63,7 +65,7 @@ public class ItemController {
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto createComment(@RequestHeader("X-Sharer-User-Id") @Positive Long bookerId,
                                     @PathVariable @Positive Long itemId,
-                                    @RequestBody CommentDto commentDto) {
+                                    @Valid @RequestBody CommentRequestDto commentDto) {
         return itemService.createComment(bookerId, itemId, commentDto);
     }
 }

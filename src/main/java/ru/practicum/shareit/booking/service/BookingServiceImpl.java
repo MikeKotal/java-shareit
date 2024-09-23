@@ -2,11 +2,13 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dao.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingMapper;
+import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.exceptions.NotFoundException;
@@ -16,7 +18,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -28,10 +30,11 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    public static final Sort ORDER_BY_START_DATE = Sort.by(Sort.Direction.DESC, "startDate");
 
     @Override
     @Transactional
-    public BookingDto createBooking(Long userId, BookingDto bookingDto) {
+    public BookingDto createBooking(Long userId, BookingRequestDto bookingDto) {
         log.info("Запрос от пользователя {} на бронирование вещи {}", userId, bookingDto);
         User user = getUserById(userId);
         Item item = getItemById(bookingDto.getItemId());
@@ -62,6 +65,9 @@ public class BookingServiceImpl implements BookingService {
         if (!booking.getItem().getOwner().getId().equals(userId)) {
             throw new ValidationException("Подтвердить бронирование может только собственник вещи");
         }
+        if (booking.getStatus() != Status.WAITING) {
+            throw new ValidationException("Для подтверждения бронирования статус должен быть 'WAITING'");
+        }
         booking.setStatus(approved ? Status.APPROVED : Status.REJECTED);
         booking = bookingRepository.save(booking);
         log.info("Установлен статус {} для бронирования {}", booking.getStatus(), booking);
@@ -71,6 +77,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDto getBooking(Long userId, Long bookingId) {
         log.info("Запрос от пользователя {} на просмотр бронирования {}", userId, bookingId);
+        checkUserExists(userId);
         Booking booking = getBookingById(bookingId);
         if ((!booking.getBooker().getId().equals(userId))
                 && (!booking.getItem().getOwner().getId().equals(userId))) {
@@ -83,7 +90,25 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingDto> getBookingsByBookerId(Long bookerId, String state) {
         log.info("Запрос от пользователя {} на получение списка бронирований по фильтру {}", bookerId, state);
-        List<Booking> bookings = getBookings(bookerId, state, Boolean.TRUE);
+        checkUserExists(bookerId);
+        LocalDateTime current = LocalDateTime.now();
+        List<Booking> bookings;
+        try {
+            bookings = switch (Status.valueOf(state)) {
+                case ALL -> bookingRepository.findAllByBookerId(bookerId, ORDER_BY_START_DATE);
+                case WAITING, REJECTED ->
+                        bookingRepository.findAllByBookerIdAndStatus(bookerId, Status.valueOf(state), ORDER_BY_START_DATE);
+                case FUTURE ->
+                        bookingRepository.findAllByBookerIdAndStartDateAfter(bookerId, current, ORDER_BY_START_DATE);
+                case PAST ->
+                        bookingRepository.findAllByBookerIdAndEndDateBefore(bookerId, current, ORDER_BY_START_DATE);
+                case CURRENT -> bookingRepository.findAllByBookerIdAndStartDateBeforeAndEndDateAfter(bookerId,
+                        current, current, ORDER_BY_START_DATE);
+                default -> throw new ValidationException(String.format("Несуществующий тип фильтра поиска %s", state));
+            };
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException(String.format("Был передан невалидный тип фильтрации: %s", state));
+        }
         log.info("Список бронирований {} пользователя", bookings);
         return BookingMapper.mapToBookingDto(bookings);
     }
@@ -91,39 +116,27 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingDto> getBookingsByOwnerId(Long ownerId, String state) {
         log.info("Запрос от владельца {} на получение списка бронирований по фильтру {}", ownerId, state);
-        List<Booking> bookings = getBookings(ownerId, state, Boolean.FALSE);
+        checkUserExists(ownerId);
+        LocalDateTime current = LocalDateTime.now();
+        List<Booking> bookings;
+        try {
+            bookings = switch (Status.valueOf(state)) {
+                case ALL -> bookingRepository.findAllByItemOwnerId(ownerId, ORDER_BY_START_DATE);
+                case WAITING, REJECTED ->
+                        bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, Status.valueOf(state), ORDER_BY_START_DATE);
+                case FUTURE ->
+                        bookingRepository.findAllByItemOwnerIdAndStartDateAfter(ownerId, current, ORDER_BY_START_DATE);
+                case PAST ->
+                        bookingRepository.findAllByItemOwnerIdAndEndDateBefore(ownerId, current, ORDER_BY_START_DATE);
+                case CURRENT -> bookingRepository.findAllByItemOwnerIdAndStartDateBeforeAndEndDateAfter(ownerId,
+                        current, current, ORDER_BY_START_DATE);
+                default -> throw new ValidationException(String.format("Несуществующий тип фильтра поиска %s", state));
+            };
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException(String.format("Был передан невалидный тип фильтрации: %s", state));
+        }
         log.info("Список бронирований {} владельца", bookings);
         return BookingMapper.mapToBookingDto(bookings);
-    }
-
-    private List<Booking> getBookings(Long userId, String state, Boolean isBooker) {
-        checkUserExists(userId);
-        Instant current = Instant.now();
-        return switch (Status.valueOf(state)) {
-            case ALL -> isBooker ? bookingRepository.findAllByBookerIdOrderByStartDateDesc(userId)
-                    : bookingRepository.findAllByItemOwnerIdOrderByStartDateDesc(userId);
-            case WAITING, REJECTED ->
-                    isBooker ? bookingRepository.findAllByBookerIdAndStatusOrderByStartDateDesc(userId,
-                            Status.valueOf(state))
-                            : bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDateDesc(userId,
-                            Status.valueOf(state));
-            case FUTURE ->
-                    isBooker ? bookingRepository.findAllByBookerIdAndStartDateAfterOrderByStartDateDesc(userId,
-                            Instant.now())
-                            : bookingRepository.findAllByItemOwnerIdAndStartDateAfterOrderByStartDateDesc(userId,
-                            Instant.now());
-            case PAST ->
-                    isBooker ? bookingRepository.findAllByBookerIdAndEndDateBeforeOrderByStartDateDesc(userId,
-                            Instant.now())
-                            : bookingRepository.findAllByItemOwnerIdAndEndDateBeforeOrderByStartDateDesc(userId,
-                            Instant.now());
-            case CURRENT ->
-                    isBooker ? bookingRepository.findAllByBookerIdAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(userId,
-                            current, current)
-                            : bookingRepository.findAllByItemOwnerIdAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(userId,
-                            current, current);
-            default -> throw new ValidationException(String.format("Несуществующий тип фильтра поиска %s", state));
-        };
     }
 
     private void checkUserExists(Long ownerId) {

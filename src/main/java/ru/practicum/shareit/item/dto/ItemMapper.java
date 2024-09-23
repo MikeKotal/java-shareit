@@ -8,9 +8,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
-import java.util.stream.StreamSupport;
-
-import static ru.practicum.shareit.booking.dto.BookingMapper.getInstantToDate;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -28,7 +25,7 @@ public class ItemMapper {
         return itemDto;
     }
 
-    public static Item mapToItem(ItemDto itemDto, User user) {
+    public static Item mapToItem(ItemRequestDto itemDto, User user) {
         log.info("ItemDto {} и User {} в маппер", itemDto, user);
         Item item = Item.builder()
                 .name(itemDto.getName())
@@ -49,18 +46,18 @@ public class ItemMapper {
                 .description(item.getDescription())
                 .available(item.getIsAvailable())
                 .lastBooking(lastBooking == null ? null : String.format("%s - %s",
-                        getInstantToDate(lastBooking.getStartDate()), getInstantToDate(lastBooking.getEndDate())))
+                        lastBooking.getStartDate(), lastBooking.getEndDate()))
                 .nextBooking(nextBooking == null ? null : String.format("%s - %s",
-                        getInstantToDate(nextBooking.getStartDate()), getInstantToDate(nextBooking.getEndDate())))
+                        nextBooking.getStartDate(), nextBooking.getEndDate()))
                 .comments(commentDtos)
                 .build();
         log.info("ItemBookingDto из маппера: {}", itemBookingDto);
         return itemBookingDto;
     }
 
-    public static List<ItemDto> mapToItemDto(Iterable<Item> items) {
+    public static List<ItemDto> mapToItemDto(List<Item> items) {
         log.info("Items в маппер: {}", items);
-        List<ItemDto> itemDtos = StreamSupport.stream(items.spliterator(), false)
+        List<ItemDto> itemDtos = items.stream()
                 .map(ItemMapper::mapToItemDto)
                 .toList();
         log.info("ItemDtos из маппера: {}", itemDtos);

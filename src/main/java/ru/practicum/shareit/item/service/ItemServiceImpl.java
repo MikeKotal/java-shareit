@@ -12,20 +12,22 @@ import ru.practicum.shareit.item.dao.CommentRepository;
 import ru.practicum.shareit.item.dao.ItemRepository;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.CommentMapper;
+import ru.practicum.shareit.item.dto.CommentRequestDto;
 import ru.practicum.shareit.item.dto.ItemBookingDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
+import ru.practicum.shareit.item.dto.ItemRequestDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.model.User;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import static ru.practicum.shareit.booking.service.BookingServiceImpl.ORDER_BY_START_DATE;
 
 @Slf4j
 @Service
@@ -40,7 +42,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public ItemDto createItem(Long ownerId, ItemDto item) {
+    public ItemDto createItem(Long ownerId, ItemRequestDto item) {
         log.info("Запрос от пользователя {} на создание вещи {}", ownerId, item);
         User user = getUserById(ownerId);
         Item newItem = itemRepository.save(ItemMapper.mapToItem(item, user));
@@ -53,12 +55,12 @@ public class ItemServiceImpl implements ItemService {
         log.info("Запрос на получение вещи с itemId {}", itemId);
         Item item = getItemById(itemId);
         List<Comment> comments = commentRepository.findAllByItemId(itemId);
-        Instant current = LocalDateTime.now().toInstant(ZoneOffset.UTC);
+        LocalDateTime current = LocalDateTime.now();
         ItemBookingDto itemDto = ItemMapper.mapToItemBookingDto(item,
-                bookingRepository.findFirstByItemIdAndItemOwnerIdAndEndDateBeforeOrderByStartDateDesc(item.getId(),
-                        ownerId, current),
-                bookingRepository.findFirstByItemIdAndItemOwnerIdAndStartDateAfterOrderByStartDateDesc(item.getId(),
-                        ownerId, current),
+                bookingRepository.findFirstByItemIdAndItemOwnerIdAndEndDateBefore(item.getId(),
+                        ownerId, current, ORDER_BY_START_DATE),
+                bookingRepository.findFirstByItemIdAndItemOwnerIdAndStartDateAfter(item.getId(),
+                        ownerId, current, ORDER_BY_START_DATE),
                 CommentMapper.mapToCommentDto(comments));
         log.info("Вещь с itemId '{} = '{}'", itemId, itemDto);
         return itemDto;
@@ -69,13 +71,13 @@ public class ItemServiceImpl implements ItemService {
         checkUserExists(ownerId);
         List<Item> items = itemRepository.findAllByOwnerId(ownerId);
         log.info("Все вещи {}", items);
-        Instant current = LocalDateTime.now().toInstant(ZoneOffset.UTC);
+        LocalDateTime current = LocalDateTime.now();
         return items.stream()
                 .map(item -> ItemMapper.mapToItemBookingDto(item,
-                        bookingRepository.findFirstByItemIdAndItemOwnerIdAndEndDateBeforeOrderByStartDateDesc(item.getId(),
-                                item.getOwner().getId(), current),
-                        bookingRepository.findFirstByItemIdAndItemOwnerIdAndStartDateAfterOrderByStartDateDesc(item.getId(),
-                                item.getOwner().getId(), current),
+                        bookingRepository.findFirstByItemIdAndItemOwnerIdAndEndDateBefore(item.getId(),
+                                item.getOwner().getId(), current, ORDER_BY_START_DATE),
+                        bookingRepository.findFirstByItemIdAndItemOwnerIdAndStartDateAfter(item.getId(),
+                                item.getOwner().getId(), current, ORDER_BY_START_DATE),
                         CommentMapper.mapToCommentDto(commentRepository.findAllByItemId(item.getId()))))
                 .toList();
     }
@@ -93,7 +95,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public ItemDto updateItem(Long ownerId, Long itemId, ItemDto item) {
+    public ItemDto updateItem(Long ownerId, Long itemId, ItemRequestDto item) {
         log.info("Запрос на обновление вещи с itemId {}", itemId);
         checkUserExists(ownerId);
         Item oldItem = getItemById(itemId);
@@ -116,11 +118,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public CommentDto createComment(Long bookerId, Long itemId, CommentDto commentDto) {
+    public CommentDto createComment(Long bookerId, Long itemId, CommentRequestDto commentDto) {
         log.info("Запрос на добавление комментария {} от пользователя {}", commentDto, bookerId);
         Booking booking = bookingRepository
                 .findFirstByBookerIdAndItemIdAndEndDateBefore(bookerId, itemId,
-                        LocalDateTime.now().toInstant(ZoneOffset.UTC))
+                        LocalDateTime.now())
                 .orElseThrow(() -> new ValidationException("У пользователя не было бронирований " +
                         "или текущее бронирование не началось/закончилось"));
         Comment comment = commentRepository.save(CommentMapper.mapToComment(commentDto, booking.getItem(),

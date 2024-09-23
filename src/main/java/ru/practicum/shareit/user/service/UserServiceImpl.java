@@ -8,6 +8,7 @@ import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
+import ru.practicum.shareit.user.dto.UserRequestDto;
 import ru.practicum.shareit.user.model.User;
 
 @Slf4j
@@ -20,7 +21,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto createUser(UserDto user) {
+    public UserDto createUser(UserRequestDto user) {
         log.info("Запрос на создание пользователя {}", user);
         User newUser = userRepository.save(UserMapper.mapToUser(user));
         log.info("Пользователь успешно создан {}", newUser);
@@ -37,7 +38,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto updateUser(Long id, UserDto user) {
+    public UserDto updateUser(Long id, UserRequestDto user) {
         log.info("Запрос на обновление пользователя с id {}", id);
         User oldUser = getUserById(id);
         if (user.getName() != null) {

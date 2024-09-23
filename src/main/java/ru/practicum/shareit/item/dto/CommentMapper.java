@@ -8,11 +8,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
-import java.util.stream.StreamSupport;
-
-import static ru.practicum.shareit.booking.dto.BookingMapper.getInstantToDate;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -24,27 +20,27 @@ public class CommentMapper {
                 .id(comment.getId())
                 .text(comment.getText())
                 .authorName(comment.getAuthor().getName())
-                .created(getInstantToDate(comment.getCreated()))
+                .created(comment.getCreated())
                 .build();
         log.info("CommentDto из мапера: {}", commentDto);
         return commentDto;
     }
 
-    public static Comment mapToComment(CommentDto commentDto, Item item, User user) {
+    public static Comment mapToComment(CommentRequestDto commentDto, Item item, User user) {
         log.info("CommentDto в маппер: {}", commentDto);
         Comment comment = Comment.builder()
                 .text(commentDto.getText())
                 .item(item)
                 .author(user)
-                .created(LocalDateTime.now().toInstant(ZoneOffset.UTC))
+                .created(LocalDateTime.now())
                 .build();
         log.info("Comment из маппера: {}", comment);
         return comment;
     }
 
-    public static List<CommentDto> mapToCommentDto(Iterable<Comment> comments) {
+    public static List<CommentDto> mapToCommentDto(List<Comment> comments) {
         log.info("Comments в маппер: {}", comments);
-        List<CommentDto> commentDtos = StreamSupport.stream(comments.spliterator(), false)
+        List<CommentDto> commentDtos = comments.stream()
                 .map(CommentMapper::mapToCommentDto)
                 .toList();
         log.info("CommentDtos из маппера: {}", commentDtos);
