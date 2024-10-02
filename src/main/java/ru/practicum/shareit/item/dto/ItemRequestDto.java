@@ -15,4 +15,6 @@ public class ItemRequestDto {
 
     @NotNull(message = "Параметр доступности не должен быть пустым")
     private Boolean available;
+
+    private Long requestId;
 }

@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.request.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,8 +15,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -25,27 +26,20 @@ import ru.practicum.shareit.user.model.User;
 @Builder
 @ToString
 @Entity
-@Table(name = "items", schema = "public")
-public class Item {
+@Table(name = "requests", schema = "public")
+public class ItemRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-
     private String description;
 
-    @Column(name = "is_available")
-    private Boolean isAvailable;
+    @Column(name = "created_at")
+    private LocalDateTime created;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "requester_id")
     @ToString.Exclude
-    private User owner;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_id")
-    @ToString.Exclude
-    private ItemRequest request;
+    private User requester;
 }

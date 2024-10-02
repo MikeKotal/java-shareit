@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
@@ -25,13 +26,14 @@ public class ItemMapper {
         return itemDto;
     }
 
-    public static Item mapToItem(ItemRequestDto itemDto, User user) {
-        log.info("ItemDto {} и User {} в маппер", itemDto, user);
+    public static Item mapToItem(ItemRequestDto itemDto, User user, ItemRequest itemRequest) {
+        log.info("ItemDto {}, User {} и Request {} в маппер", itemDto, user, itemRequest);
         Item item = Item.builder()
                 .name(itemDto.getName())
                 .description(itemDto.getDescription())
                 .isAvailable(itemDto.getAvailable())
                 .owner(user)
+                .request(itemRequest)
                 .build();
         log.info("Item из маппера: {}", item);
         return item;

@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import ru.practicum.shareit.item.dto.ShortItemDto;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
@@ -19,4 +20,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
             or it.description ilike %?1%)
             """)
     List<Item> findItemsByText(String text);
+
+    List<ShortItemDto> findAllByRequestId(Long requestId);
 }
