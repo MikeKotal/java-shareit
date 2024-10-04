@@ -7,7 +7,7 @@ KEY(name)
 VALUES('Дрель', 'Для сверления стен', true, 1, null), ('Пила', 'Для запила дверей', true, 1, null);
 
 MERGE INTO bookings(start_date, end_date, item_id, booker_id, status)
-KEY(item_id)
+KEY(booker_id)
 VALUES('2024-09-01', '2024-09-02', 1, 2, 'APPROVED'), ('2024-09-03', '2024-09-04', 1, 3, 'APPROVED');
 
 MERGE INTO comments(text, item_id, author_id, created_at)

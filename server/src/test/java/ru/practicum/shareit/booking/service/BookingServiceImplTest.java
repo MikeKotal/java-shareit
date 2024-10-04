@@ -81,8 +81,8 @@ public class BookingServiceImplTest {
     public void checkSuccessGetBookingByOwnerId() {
         List<BookingDto> bookingDtos = bookingService.getBookingsByOwnerId(1L, Status.PAST.toString());
 
-        assertThat(bookingDtos.size(), equalTo(1));
-        assertThat(bookingDtos.getFirst().getId(), equalTo(1L));
+        assertThat(bookingDtos.size(), equalTo(2));
+        assertThat(bookingDtos.getFirst().getId(), equalTo(2L));
     }
 
     private BookingRequestDto prepareBooking(Long itemId) {
