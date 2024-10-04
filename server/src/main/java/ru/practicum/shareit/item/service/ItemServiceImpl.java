@@ -16,7 +16,7 @@ import ru.practicum.shareit.item.dto.CommentRequestDto;
 import ru.practicum.shareit.item.dto.ItemBookingDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
-import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemReqDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.request.dao.ItemRequestRepository;
@@ -45,7 +45,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public ItemDto createItem(Long ownerId, ItemRequestDto item) {
+    public ItemDto createItem(Long ownerId, ItemReqDto item) {
         log.info("Запрос от пользователя {} на создание вещи {}", ownerId, item);
         User user = getUserById(ownerId);
         ItemRequest itemRequest = null;
@@ -106,7 +106,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional
-    public ItemDto updateItem(Long ownerId, Long itemId, ItemRequestDto item) {
+    public ItemDto updateItem(Long ownerId, Long itemId, ItemReqDto item) {
         log.info("Запрос на обновление вещи с itemId {}", itemId);
         checkUserExists(ownerId);
         Item oldItem = getItemById(itemId);

@@ -26,7 +26,7 @@ public class ItemMapper {
         return itemDto;
     }
 
-    public static Item mapToItem(ItemRequestDto itemDto, User user, ItemRequest itemRequest) {
+    public static Item mapToItem(ItemReqDto itemDto, User user, ItemRequest itemRequest) {
         log.info("ItemDto {}, User {} и Request {} в маппер", itemDto, user, itemRequest);
         Item item = Item.builder()
                 .name(itemDto.getName())

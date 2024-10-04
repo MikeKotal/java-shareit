@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.item.ItemClient;
 import ru.practicum.shareit.item.dto.CommentRequestDto;
-import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemReqDto;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class ItemController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Object> createItem(@RequestHeader("X-Sharer-User-Id") @Positive Long ownerId,
-                                             @Valid @RequestBody ItemRequestDto item) {
+                                             @Valid @RequestBody ItemReqDto item) {
         return itemClient.createItem(ownerId, item);
     }
 
@@ -53,7 +53,7 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ResponseEntity<Object> updateItem(@RequestHeader("X-Sharer-User-Id") @Positive Long ownerId,
                                              @PathVariable @Positive Long itemId,
-                                             @RequestBody ItemRequestDto item) {
+                                             @RequestBody ItemReqDto item) {
         return itemClient.updateItem(ownerId, itemId, item);
     }
 

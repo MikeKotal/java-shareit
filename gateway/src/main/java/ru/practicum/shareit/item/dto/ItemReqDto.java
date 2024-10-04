@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class ItemRequestDto {
+public class ItemReqDto {
 
     @NotBlank(message = "Наименование вещи не должно быть пустым")
     private String name;

@@ -16,7 +16,7 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.CommentRequestDto;
 import ru.practicum.shareit.item.dto.ItemBookingDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemRequestDto;
+import ru.practicum.shareit.item.dto.ItemReqDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class ItemController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
-                              @RequestBody ItemRequestDto item) {
+                              @RequestBody ItemReqDto item) {
         return itemService.createItem(ownerId, item);
     }
 
@@ -55,7 +55,7 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") Long ownerId,
                               @PathVariable Long itemId,
-                              @RequestBody ItemRequestDto item) {
+                              @RequestBody ItemReqDto item) {
         return itemService.updateItem(ownerId, itemId, item);
     }
 
