@@ -7,12 +7,19 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.shareit.error.model.ErrorResponse;
+import ru.practicum.shareit.exceptions.ValidationException;
 
 import java.util.Objects;
 
 @Slf4j
 @RestControllerAdvice(basePackages = "ru.practicum.shareit")
 public class ErrorHandler {
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleValidated(final ValidationException e) {
+        return new ErrorResponse(e.getMessage());
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

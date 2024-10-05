@@ -129,7 +129,7 @@ public class BookingControllerTest {
 
     @Test
     public void whenCallGetBookingsByBookerIdThenReturnListSize1() throws Exception {
-        when(bookingService.getBookingsByBookerId(1L, Status.WAITING.name()))
+        when(bookingService.getBookingsByBookerId(1L, Status.WAITING))
                 .thenReturn(List.of(BOOKING_DTO));
 
         HttpHeaders headers = new HttpHeaders();
@@ -155,7 +155,7 @@ public class BookingControllerTest {
 
     @Test
     public void whenCallGetBookingsByOwnerIdThenReturnListSize1() throws Exception {
-        when(bookingService.getBookingsByOwnerId(1L, Status.ALL.name()))
+        when(bookingService.getBookingsByOwnerId(1L, Status.ALL))
                 .thenReturn(List.of(BOOKING_DTO));
 
         HttpHeaders headers = new HttpHeaders();

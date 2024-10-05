@@ -121,7 +121,7 @@ public class BookingServiceImplTest {
     public void getAllBookingsByBookerId() {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByBookerId(anyLong(), any())).thenReturn(new ArrayList<>());
-        bookingService.getBookingsByBookerId(1L, Status.ALL.name());
+        bookingService.getBookingsByBookerId(1L, Status.ALL);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerId(anyLong(), any());
@@ -134,7 +134,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByBookerIdAndStatus(anyLong(), any(Status.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByBookerId(1L, Status.WAITING.name());
+        bookingService.getBookingsByBookerId(1L, Status.WAITING);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndStatus(anyLong(),
@@ -148,7 +148,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByBookerIdAndStatus(anyLong(), any(Status.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByBookerId(1L, Status.REJECTED.name());
+        bookingService.getBookingsByBookerId(1L, Status.REJECTED);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndStatus(anyLong(),
@@ -162,7 +162,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByBookerIdAndStartDateAfter(anyLong(), any(LocalDateTime.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByBookerId(1L, Status.FUTURE.name());
+        bookingService.getBookingsByBookerId(1L, Status.FUTURE);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndStartDateAfter(anyLong(),
@@ -176,7 +176,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByBookerIdAndEndDateBefore(anyLong(), any(LocalDateTime.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByBookerId(1L, Status.PAST.name());
+        bookingService.getBookingsByBookerId(1L, Status.PAST);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndEndDateBefore(anyLong(),
@@ -190,7 +190,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByBookerIdAndStartDateBeforeAndEndDateAfter(anyLong(),
                 any(LocalDateTime.class), any(LocalDateTime.class), any())).thenReturn(new ArrayList<>());
-        bookingService.getBookingsByBookerId(1L, Status.CURRENT.name());
+        bookingService.getBookingsByBookerId(1L, Status.CURRENT);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1))
@@ -204,7 +204,7 @@ public class BookingServiceImplTest {
     public void getAllBookingsByOwnerId() {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByItemOwnerId(anyLong(), any())).thenReturn(new ArrayList<>());
-        bookingService.getBookingsByOwnerId(1L, Status.ALL.name());
+        bookingService.getBookingsByOwnerId(1L, Status.ALL);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerId(anyLong(), any());
@@ -217,7 +217,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByItemOwnerIdAndStatus(anyLong(), any(Status.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByOwnerId(1L, Status.WAITING.name());
+        bookingService.getBookingsByOwnerId(1L, Status.WAITING);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndStatus(anyLong(),
@@ -231,7 +231,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByItemOwnerIdAndStatus(anyLong(), any(Status.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByOwnerId(1L, Status.REJECTED.name());
+        bookingService.getBookingsByOwnerId(1L, Status.REJECTED);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndStatus(anyLong(),
@@ -245,7 +245,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByItemOwnerIdAndStartDateAfter(anyLong(), any(LocalDateTime.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByOwnerId(1L, Status.FUTURE.name());
+        bookingService.getBookingsByOwnerId(1L, Status.FUTURE);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndStartDateAfter(anyLong(),
@@ -259,7 +259,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByItemOwnerIdAndEndDateBefore(anyLong(), any(LocalDateTime.class), any()))
                 .thenReturn(new ArrayList<>());
-        bookingService.getBookingsByOwnerId(1L, Status.PAST.name());
+        bookingService.getBookingsByOwnerId(1L, Status.PAST);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndEndDateBefore(anyLong(),
@@ -273,7 +273,7 @@ public class BookingServiceImplTest {
         Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
         Mockito.when(bookingRepository.findAllByItemOwnerIdAndStartDateBeforeAndEndDateAfter(anyLong(),
                 any(LocalDateTime.class), any(LocalDateTime.class), any())).thenReturn(new ArrayList<>());
-        bookingService.getBookingsByOwnerId(1L, Status.CURRENT.name());
+        bookingService.getBookingsByOwnerId(1L, Status.CURRENT);
 
         Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
         Mockito.verify(bookingRepository, Mockito.times(1))

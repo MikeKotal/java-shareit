@@ -88,53 +88,40 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getBookingsByBookerId(Long bookerId, String state) {
+    public List<BookingDto> getBookingsByBookerId(Long bookerId, Status state) {
         log.info("Запрос от пользователя {} на получение списка бронирований по фильтру {}", bookerId, state);
         checkUserExists(bookerId);
         LocalDateTime current = LocalDateTime.now();
-        List<Booking> bookings;
-        try {
-            bookings = switch (Status.valueOf(state)) {
-                case ALL -> bookingRepository.findAllByBookerId(bookerId, ORDER_BY_START_DATE);
-                case WAITING, REJECTED ->
-                        bookingRepository.findAllByBookerIdAndStatus(bookerId, Status.valueOf(state), ORDER_BY_START_DATE);
-                case FUTURE ->
-                        bookingRepository.findAllByBookerIdAndStartDateAfter(bookerId, current, ORDER_BY_START_DATE);
-                case PAST ->
-                        bookingRepository.findAllByBookerIdAndEndDateBefore(bookerId, current, ORDER_BY_START_DATE);
-                case CURRENT -> bookingRepository.findAllByBookerIdAndStartDateBeforeAndEndDateAfter(bookerId,
-                        current, current, ORDER_BY_START_DATE);
-                default -> throw new ValidationException(String.format("Несуществующий тип фильтра поиска %s", state));
-            };
-        } catch (IllegalArgumentException e) {
-            throw new ValidationException(String.format("Был передан невалидный тип фильтрации: %s", state));
-        }
+        List<Booking> bookings = switch (state) {
+            case ALL -> bookingRepository.findAllByBookerId(bookerId, ORDER_BY_START_DATE);
+            case WAITING, REJECTED ->
+                    bookingRepository.findAllByBookerIdAndStatus(bookerId, state, ORDER_BY_START_DATE);
+            case FUTURE -> bookingRepository.findAllByBookerIdAndStartDateAfter(bookerId, current, ORDER_BY_START_DATE);
+            case PAST -> bookingRepository.findAllByBookerIdAndEndDateBefore(bookerId, current, ORDER_BY_START_DATE);
+            case CURRENT -> bookingRepository.findAllByBookerIdAndStartDateBeforeAndEndDateAfter(bookerId,
+                    current, current, ORDER_BY_START_DATE);
+            default -> throw new ValidationException(String.format("Несуществующий тип фильтра поиска %s", state));
+        };
         log.info("Список бронирований {} пользователя", bookings);
         return BookingMapper.mapToBookingDto(bookings);
     }
 
     @Override
-    public List<BookingDto> getBookingsByOwnerId(Long ownerId, String state) {
+    public List<BookingDto> getBookingsByOwnerId(Long ownerId, Status state) {
         log.info("Запрос от владельца {} на получение списка бронирований по фильтру {}", ownerId, state);
         checkUserExists(ownerId);
         LocalDateTime current = LocalDateTime.now();
-        List<Booking> bookings;
-        try {
-            bookings = switch (Status.valueOf(state)) {
-                case ALL -> bookingRepository.findAllByItemOwnerId(ownerId, ORDER_BY_START_DATE);
-                case WAITING, REJECTED ->
-                        bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, Status.valueOf(state), ORDER_BY_START_DATE);
-                case FUTURE ->
-                        bookingRepository.findAllByItemOwnerIdAndStartDateAfter(ownerId, current, ORDER_BY_START_DATE);
-                case PAST ->
-                        bookingRepository.findAllByItemOwnerIdAndEndDateBefore(ownerId, current, ORDER_BY_START_DATE);
-                case CURRENT -> bookingRepository.findAllByItemOwnerIdAndStartDateBeforeAndEndDateAfter(ownerId,
-                        current, current, ORDER_BY_START_DATE);
-                default -> throw new ValidationException(String.format("Несуществующий тип фильтра поиска %s", state));
-            };
-        } catch (IllegalArgumentException e) {
-            throw new ValidationException(String.format("Был передан невалидный тип фильтрации: %s", state));
-        }
+        List<Booking> bookings = switch (state) {
+            case ALL -> bookingRepository.findAllByItemOwnerId(ownerId, ORDER_BY_START_DATE);
+            case WAITING, REJECTED ->
+                    bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, state, ORDER_BY_START_DATE);
+            case FUTURE ->
+                    bookingRepository.findAllByItemOwnerIdAndStartDateAfter(ownerId, current, ORDER_BY_START_DATE);
+            case PAST -> bookingRepository.findAllByItemOwnerIdAndEndDateBefore(ownerId, current, ORDER_BY_START_DATE);
+            case CURRENT -> bookingRepository.findAllByItemOwnerIdAndStartDateBeforeAndEndDateAfter(ownerId,
+                    current, current, ORDER_BY_START_DATE);
+            default -> throw new ValidationException(String.format("Несуществующий тип фильтра поиска %s", state));
+        };
         log.info("Список бронирований {} владельца", bookings);
         return BookingMapper.mapToBookingDto(bookings);
     }

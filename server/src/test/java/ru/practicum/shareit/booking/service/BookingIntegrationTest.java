@@ -71,7 +71,7 @@ public class BookingIntegrationTest {
 
     @Test
     public void checkSuccessGetBookingByBookerId() {
-        List<BookingDto> bookingDtos = bookingService.getBookingsByBookerId(2L, Status.PAST.toString());
+        List<BookingDto> bookingDtos = bookingService.getBookingsByBookerId(2L, Status.PAST);
 
         assertThat(bookingDtos.size(), equalTo(1));
         assertThat(bookingDtos.getFirst().getId(), equalTo(1L));
@@ -79,7 +79,7 @@ public class BookingIntegrationTest {
 
     @Test
     public void checkSuccessGetBookingByOwnerId() {
-        List<BookingDto> bookingDtos = bookingService.getBookingsByOwnerId(1L, Status.PAST.toString());
+        List<BookingDto> bookingDtos = bookingService.getBookingsByOwnerId(1L, Status.PAST);
 
         assertThat(bookingDtos.size(), equalTo(2));
         assertThat(bookingDtos.getFirst().getId(), equalTo(2L));

@@ -8,7 +8,9 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
+import ru.practicum.shareit.booking.dto.Status;
 import ru.practicum.shareit.client.BaseClient;
+import ru.practicum.shareit.exceptions.ValidationException;
 
 import java.util.Map;
 
@@ -43,16 +45,26 @@ public class BookingClient extends BaseClient {
     }
 
     public ResponseEntity<Object> getBookingsByBookerId(Long bookerId, String state) {
-        Map<String, Object> parameters = Map.of(
-                "state", state
-        );
+        Map<String, Object> parameters;
+        try {
+            parameters = Map.of(
+                    "state", Status.valueOf(state)
+            );
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException(String.format("Был передан невалидный тип фильтрации: %s", state));
+        }
         return get("?state={state}", bookerId, parameters);
     }
 
     public ResponseEntity<Object> getBookingsByOwnerId(Long ownerId, String state) {
-        Map<String, Object> parameters = Map.of(
-                "state", state
-        );
+        Map<String, Object> parameters;
+        try {
+            parameters = Map.of(
+                    "state", Status.valueOf(state)
+            );
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException(String.format("Был передан невалидный тип фильтрации: %s", state));
+        }
         return get("/owner?state={state}", ownerId, parameters);
     }
 }
