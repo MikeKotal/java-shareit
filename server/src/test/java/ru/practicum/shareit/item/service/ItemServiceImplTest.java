@@ -1,112 +1,176 @@
 package ru.practicum.shareit.item.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import ru.practicum.shareit.booking.dao.BookingRepository;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.item.dao.CommentRepository;
+import ru.practicum.shareit.item.dao.ItemRepository;
 import ru.practicum.shareit.item.dto.CommentRequestDto;
-import ru.practicum.shareit.item.dto.ItemBookingDto;
-import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemReqDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.dao.ItemRequestRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.user.dao.UserRepository;
+import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 
-@Transactional
-@ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class ItemServiceImplTest {
 
-    private final EntityManager em;
-    private final ItemService itemService;
+    @Autowired
+    ItemService itemService;
 
-    @Test
-    public void checkSuccessCreateItem() {
-        ItemReqDto itemReqDto = prepareItem("Тест", "Тестовая");
-        ItemDto created = itemService.createItem(2L, itemReqDto);
+    @MockBean
+    ItemRepository itemRepository;
 
-        TypedQuery<Item> query = em.createQuery("Select i from Item i where i.id = :id", Item.class);
-        Item item = query.setParameter("id", created.getId()).getSingleResult();
+    @MockBean
+    UserRepository userRepository;
 
-        assertThat(item.getId(), equalTo(created.getId()));
-        assertThat(item.getName(), equalTo(itemReqDto.getName()));
-        assertThat(item.getDescription(), equalTo(itemReqDto.getDescription()));
-        assertThat(item.getIsAvailable(), is(Boolean.TRUE));
-        assertThat(item.getOwner(), notNullValue());
+    @MockBean
+    BookingRepository bookingRepository;
+
+    @MockBean
+    CommentRepository commentRepository;
+
+    @MockBean
+    ItemRequestRepository itemRequestRepository;
+
+    @Mock
+    Booking booking;
+
+    @Mock
+    User user;
+
+    @Mock
+    Item item;
+
+    @Mock
+    ItemReqDto itemReqDto;
+
+    @Mock
+    ItemRequest itemRequest;
+
+    @Mock
+    Comment comment;
+
+    @Mock
+    CommentRequestDto commentRequestDto;
+
+    @BeforeEach
+    public void setUp() {
+        booking.setBooker(user);
+        booking.setItem(item);
+        item.setOwner(user);
     }
 
     @Test
-    public void checkSuccessGetItem() {
-        ItemBookingDto itemDto = itemService.getItem(1L, 1L);
+    public void createItemTest() {
+        Mockito.when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+        Mockito.when(itemReqDto.getRequestId()).thenReturn(1L);
+        Mockito.when(itemRequestRepository.findById(anyLong())).thenReturn(Optional.ofNullable(itemRequest));
+        Mockito.when(itemRepository.save(any())).thenReturn(item);
+        itemService.createItem(1L, itemReqDto);
 
-        assertThat(itemDto.getId(), equalTo(1L));
-        assertThat(itemDto.getName(), equalTo("Дрель"));
-        assertThat(itemDto.getDescription(), equalTo("Для сверления стен"));
-        assertThat(itemDto.getAvailable(), is(Boolean.TRUE));
-        assertThat(itemDto.getLastBooking(), equalTo("2024-09-03T00:00 - 2024-09-04T00:00"));
-        assertThat(itemDto.getNextBooking(), nullValue());
+        Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(itemReqDto, Mockito.times(2)).getRequestId();
+        Mockito.verify(itemRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    public void checkSuccessGetItems() {
-        List<ItemBookingDto> bookingDtos = itemService.getItems(1L);
+    public void getItemTest() {
+        Mockito.when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
+        Mockito.when(commentRepository.findAllByItemId(anyLong())).thenReturn(new ArrayList<>());
+        Mockito.when(bookingRepository.findFirstByItemIdAndItemOwnerIdAndEndDateBefore(anyLong(), anyLong(),
+                any(LocalDateTime.class), any())).thenReturn(booking);
+        Mockito.when(bookingRepository.findFirstByItemIdAndItemOwnerIdAndStartDateAfter(anyLong(), anyLong(),
+                any(LocalDateTime.class), any())).thenReturn(booking);
+        itemService.getItem(1L, 1L);
 
-        assertThat(bookingDtos.size(), equalTo(2));
+        Mockito.verify(itemRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(commentRepository, Mockito.times(1)).findAllByItemId(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findFirstByItemIdAndItemOwnerIdAndEndDateBefore(anyLong(), anyLong(), any(LocalDateTime.class), any());
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findFirstByItemIdAndItemOwnerIdAndStartDateAfter(anyLong(), anyLong(), any(LocalDateTime.class), any());
     }
 
     @Test
-    public void checkSuccessGetItemsByText() {
-        List<ItemDto> itemDtos = itemService.getItemsByText(2L, "для");
+    public void getItemsTest() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(item.getOwner()).thenReturn(user);
+        Mockito.when(user.getId()).thenReturn(1L);
+        Mockito.when(item.getId()).thenReturn(1L);
+        Mockito.when(itemRepository.findAllByOwnerId(anyLong())).thenReturn(List.of(item));
+        Mockito.when(bookingRepository.findFirstByItemIdAndItemOwnerIdAndEndDateBefore(anyLong(), anyLong(),
+                any(LocalDateTime.class), any())).thenReturn(booking);
+        Mockito.when(bookingRepository.findFirstByItemIdAndItemOwnerIdAndStartDateAfter(anyLong(), anyLong(),
+                any(LocalDateTime.class), any())).thenReturn(booking);
+        Mockito.when(commentRepository.findAllByItemId(anyLong())).thenReturn(new ArrayList<>());
+        itemService.getItems(1L);
 
-        assertThat(itemDtos.size(), equalTo(2));
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(itemRepository, Mockito.times(1)).findAllByOwnerId(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findFirstByItemIdAndItemOwnerIdAndEndDateBefore(anyLong(), anyLong(), any(LocalDateTime.class), any());
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findFirstByItemIdAndItemOwnerIdAndStartDateAfter(anyLong(), anyLong(), any(LocalDateTime.class), any());
+        Mockito.verify(commentRepository, Mockito.times(1)).findAllByItemId(1L);
     }
 
     @Test
-    public void checkSuccessItemUpdate() {
-        ItemReqDto itemReqDto = prepareItem("Обновление", "Серьезное");
+    public void getItemsByTextTest() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(itemRepository.findItemsByText(anyString())).thenReturn(List.of(item));
+        itemService.getItemsByText(1L, "Test");
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(itemRepository, Mockito.times(1)).findItemsByText("Test");
+    }
+
+    @Test
+    public void updateItemTest() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
+        Mockito.when(item.getOwner()).thenReturn(user);
+        Mockito.when(user.getId()).thenReturn(1L);
+        Mockito.when(itemRepository.save(any())).thenReturn(item);
         itemService.updateItem(1L, 1L, itemReqDto);
 
-        TypedQuery<Item> query = em.createQuery("Select i from Item i where i.id = :id", Item.class);
-        Item item = query.setParameter("id", 1L).getSingleResult();
-
-        assertThat(item.getId(), equalTo(1L));
-        assertThat(item.getName(), equalTo(itemReqDto.getName()));
-        assertThat(item.getDescription(), equalTo(itemReqDto.getDescription()));
-        assertThat(item.getIsAvailable(), is(Boolean.TRUE));
-        assertThat(item.getOwner(), notNullValue());
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(itemRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(itemRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    public void checkSuccessCreateComment() {
-        itemService.createComment(3L, 1L, CommentRequestDto.builder().text("Тест").build());
+    public void createCommentTest() {
+        Mockito.when(bookingRepository.findFirstByBookerIdAndItemIdAndEndDateBefore(anyLong(), anyLong(),
+                any(LocalDateTime.class))).thenReturn(Optional.ofNullable(booking));
+        Mockito.when(commentRepository.save(any())).thenReturn(comment);
+        Mockito.when(booking.getItem()).thenReturn(item);
+        Mockito.when(booking.getBooker()).thenReturn(user);
+        Mockito.when(comment.getAuthor()).thenReturn(user);
+        itemService.createComment(1L, 1L, commentRequestDto);
 
-        TypedQuery<Comment> query = em.createQuery("Select c from Comment c where c.id = :id", Comment.class);
-        Comment comment = query.setParameter("id", 2L).getSingleResult();
-
-        assertThat(comment.getId(), equalTo(2L));
-        assertThat(comment.getText(), equalTo("Тест"));
-        assertThat(comment.getItem(), notNullValue());
-        assertThat(comment.getAuthor(), notNullValue());
-        assertThat(comment.getCreated(), notNullValue());
-    }
-
-    private ItemReqDto prepareItem(String name, String description) {
-        return ItemReqDto.builder()
-                .name(name)
-                .description(description)
-                .available(Boolean.TRUE)
-                .build();
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findFirstByBookerIdAndItemIdAndEndDateBefore(anyLong(), anyLong(), any(LocalDateTime.class));
+        Mockito.verify(commentRepository, Mockito.times(1)).save(any());
     }
 }

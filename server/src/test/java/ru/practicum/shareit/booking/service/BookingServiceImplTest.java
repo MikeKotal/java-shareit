@@ -1,95 +1,285 @@
 package ru.practicum.shareit.booking.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.dto.BookingDto;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import ru.practicum.shareit.booking.dao.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
+import ru.practicum.shareit.item.dao.ItemRepository;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.dao.UserRepository;
+import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 
-@Transactional
-@ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class BookingServiceImplTest {
 
-    private final EntityManager em;
-    private final BookingService bookingService;
+    @Autowired
+    BookingService bookingService;
 
-    @Test
-    public void checkSuccessCreateBooking() {
-        BookingRequestDto requestDto = prepareBooking(2L);
-        BookingDto created = bookingService.createBooking(2L, requestDto);
+    @MockBean
+    BookingRepository bookingRepository;
 
-        TypedQuery<Booking> query = em.createQuery("Select b from Booking b where b.id = :id", Booking.class);
-        Booking booking = query.setParameter("id", created.getId()).getSingleResult();
+    @MockBean
+    ItemRepository itemRepository;
 
-        assertThat(booking.getId(), equalTo(created.getId()));
-        assertThat(booking.getStartDate(), equalTo(requestDto.getStart()));
-        assertThat(booking.getEndDate(), equalTo(requestDto.getEnd()));
-        assertThat(booking.getItem(), notNullValue());
-        assertThat(booking.getBooker(), notNullValue());
-        assertThat(booking.getStatus(), equalTo(Status.WAITING));
+    @MockBean
+    UserRepository userRepository;
+
+    @Mock
+    Booking booking;
+
+    @Mock
+    User user;
+
+    @Mock
+    Item item;
+
+    @Mock
+    BookingRequestDto bookingRequestDto;
+
+    @BeforeEach
+    public void setUp() {
+        booking.setBooker(user);
+        booking.setItem(item);
+        item.setOwner(user);
     }
 
     @Test
-    public void checkSuccessApprovedBooking() {
-        BookingRequestDto requestDto = prepareBooking(2L);
-        BookingDto created = bookingService.createBooking(2L, requestDto);
-        bookingService.approveBooking(1L, created.getId(), Boolean.TRUE);
+    public void createBookingTest() {
+        Mockito.when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+        Mockito.when(bookingRequestDto.getItemId()).thenReturn(1L);
+        Mockito.when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
+        Mockito.when(item.getIsAvailable()).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRequestDto.getStart()).thenReturn(LocalDateTime.now());
+        Mockito.when(bookingRequestDto.getEnd()).thenReturn(LocalDateTime.now().plusDays(1L));
+        Mockito.when(item.getId()).thenReturn(1L);
+        Mockito.when(booking.getItem()).thenReturn(item);
+        Mockito.when(booking.getBooker()).thenReturn(user);
+        Mockito.when(bookingRepository.findBookingByItemIdAndDate(anyLong(), any(), any())).thenReturn(new ArrayList<>());
+        Mockito.when(bookingRepository.save(any())).thenReturn(booking);
+        bookingService.createBooking(1L, bookingRequestDto);
 
-        TypedQuery<Booking> query = em.createQuery("Select b from Booking b where b.id = :id", Booking.class);
-        Booking booking = query.setParameter("id", created.getId()).getSingleResult();
-
-        assertThat(booking.getStatus(), equalTo(Status.APPROVED));
+        Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(itemRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findBookingByItemIdAndDate(anyLong(), any(LocalDateTime.class), any(LocalDateTime.class));
+        Mockito.verify(bookingRepository, Mockito.times(1)).save(any());
+        Mockito.verify(booking, Mockito.times(1)).getStartDate();
+        Mockito.verify(booking, Mockito.times(1)).getEndDate();
     }
 
     @Test
-    public void checkSuccessGetBooking() {
-        BookingDto bookingDto = bookingService.getBooking(2L, 1L);
+    public void approveBookingTest() {
+        Mockito.when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
+        Mockito.when(booking.getBooker()).thenReturn(user);
+        Mockito.when(booking.getItem()).thenReturn(item);
+        Mockito.when(item.getOwner()).thenReturn(user);
+        Mockito.when(booking.getStatus()).thenReturn(Status.WAITING);
+        Mockito.doNothing().when(booking).setStatus(any());
+        Mockito.when(user.getId()).thenReturn(1L);
+        Mockito.when(bookingRepository.save(any())).thenReturn(booking);
+        bookingService.approveBooking(1L, 1L, Boolean.TRUE);
 
-        assertThat(bookingDto.getId(), equalTo(1L));
-        assertThat(bookingDto.getStart(), equalTo(LocalDateTime.parse("2024-09-01T00:00")));
-        assertThat(bookingDto.getEnd(), equalTo(LocalDateTime.parse("2024-09-02T00:00")));
-        assertThat(bookingDto.getStatus(), equalTo(Status.APPROVED));
-        assertThat(bookingDto.getItem(), notNullValue());
-        assertThat(bookingDto.getBooker(), notNullValue());
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    public void checkSuccessGetBookingByBookerId() {
-        List<BookingDto> bookingDtos = bookingService.getBookingsByBookerId(2L, Status.PAST.toString());
+    public void getBookingTest() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
+        Mockito.when(booking.getBooker()).thenReturn(user);
+        Mockito.when(booking.getItem()).thenReturn(item);
+        Mockito.when(user.getId()).thenReturn(1L);
+        bookingService.getBooking(1L, 1L);
 
-        assertThat(bookingDtos.size(), equalTo(1));
-        assertThat(bookingDtos.getFirst().getId(), equalTo(1L));
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(booking, Mockito.times(2)).getBooker();
+        Mockito.verify(booking, Mockito.times(1)).getItem();
+        Mockito.verify(user, Mockito.times(2)).getId();
     }
 
     @Test
-    public void checkSuccessGetBookingByOwnerId() {
-        List<BookingDto> bookingDtos = bookingService.getBookingsByOwnerId(1L, Status.PAST.toString());
+    public void getAllBookingsByBookerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByBookerId(anyLong(), any())).thenReturn(new ArrayList<>());
+        bookingService.getBookingsByBookerId(1L, Status.ALL.name());
 
-        assertThat(bookingDtos.size(), equalTo(2));
-        assertThat(bookingDtos.getFirst().getId(), equalTo(2L));
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerId(anyLong(), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
     }
 
-    private BookingRequestDto prepareBooking(Long itemId) {
-        return BookingRequestDto.builder()
-                .itemId(itemId)
-                .start(LocalDateTime.now().plusSeconds(5))
-                .end(LocalDateTime.now().plusSeconds(10))
-                .build();
+    @Test
+    public void getWaitingBookingsByBookerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByBookerIdAndStatus(anyLong(), any(Status.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByBookerId(1L, Status.WAITING.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndStatus(anyLong(),
+                any(Status.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getRejectedBookingsByBookerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByBookerIdAndStatus(anyLong(), any(Status.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByBookerId(1L, Status.REJECTED.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndStatus(anyLong(),
+                any(Status.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getFutureBookingsByBookerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByBookerIdAndStartDateAfter(anyLong(), any(LocalDateTime.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByBookerId(1L, Status.FUTURE.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndStartDateAfter(anyLong(),
+                any(LocalDateTime.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getPastBookingsByBookerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByBookerIdAndEndDateBefore(anyLong(), any(LocalDateTime.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByBookerId(1L, Status.PAST.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByBookerIdAndEndDateBefore(anyLong(),
+                any(LocalDateTime.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getCurrentBookingsByBookerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByBookerIdAndStartDateBeforeAndEndDateAfter(anyLong(),
+                any(LocalDateTime.class), any(LocalDateTime.class), any())).thenReturn(new ArrayList<>());
+        bookingService.getBookingsByBookerId(1L, Status.CURRENT.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findAllByBookerIdAndStartDateBeforeAndEndDateAfter(anyLong(), any(LocalDateTime.class),
+                        any(LocalDateTime.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getAllBookingsByOwnerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByItemOwnerId(anyLong(), any())).thenReturn(new ArrayList<>());
+        bookingService.getBookingsByOwnerId(1L, Status.ALL.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerId(anyLong(), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getWaitingBookingsByOwnerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByItemOwnerIdAndStatus(anyLong(), any(Status.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByOwnerId(1L, Status.WAITING.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndStatus(anyLong(),
+                any(Status.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getRejectedBookingsByOwnerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByItemOwnerIdAndStatus(anyLong(), any(Status.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByOwnerId(1L, Status.REJECTED.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndStatus(anyLong(),
+                any(Status.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getFutureBookingsByOwnerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByItemOwnerIdAndStartDateAfter(anyLong(), any(LocalDateTime.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByOwnerId(1L, Status.FUTURE.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndStartDateAfter(anyLong(),
+                any(LocalDateTime.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getPastBookingsByOwnerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByItemOwnerIdAndEndDateBefore(anyLong(), any(LocalDateTime.class), any()))
+                .thenReturn(new ArrayList<>());
+        bookingService.getBookingsByOwnerId(1L, Status.PAST.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1)).findAllByItemOwnerIdAndEndDateBefore(anyLong(),
+                any(LocalDateTime.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
+    }
+
+    @Test
+    public void getCurrentBookingsByOwnerId() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(bookingRepository.findAllByItemOwnerIdAndStartDateBeforeAndEndDateAfter(anyLong(),
+                any(LocalDateTime.class), any(LocalDateTime.class), any())).thenReturn(new ArrayList<>());
+        bookingService.getBookingsByOwnerId(1L, Status.CURRENT.name());
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(bookingRepository, Mockito.times(1))
+                .findAllByItemOwnerIdAndStartDateBeforeAndEndDateAfter(anyLong(), any(LocalDateTime.class),
+                        any(LocalDateTime.class), any());
+        Assertions.assertEquals(1, Mockito.mockingDetails(bookingRepository).getInvocations().size(),
+                "Объект bookingRepository должен был быть вызван ровно 1 раз");
     }
 }

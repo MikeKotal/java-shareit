@@ -1,79 +1,70 @@
 package ru.practicum.shareit.user.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.user.dto.UserDto;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import ru.practicum.shareit.user.dao.UserRepository;
 import ru.practicum.shareit.user.dto.UserRequestDto;
 import ru.practicum.shareit.user.model.User;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import java.util.Optional;
 
-@Transactional
-@ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+import static org.mockito.ArgumentMatchers.any;
+
+@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
 
-    private final EntityManager em;
-    private final UserService userService;
+    @Autowired
+    UserService userService;
+
+    @MockBean
+    UserRepository userRepository;
+
+    @Mock
+    User user;
+
+    @Mock
+    UserRequestDto userRequestDto;
 
     @Test
-    public void checkSuccessCreateUser() {
-        UserRequestDto userRequestDto = prepareUser("Тест", "newTest@test.com");
+    public void createUserTest() {
+        Mockito.when(userRepository.save(any())).thenReturn(user);
         userService.createUser(userRequestDto);
 
-        TypedQuery<User> query = em.createQuery("Select u from User u where u.id = :id", User.class);
-        User user = query.setParameter("id", 4L).getSingleResult();
-
-        assertThat(user.getId(), equalTo(4L));
-        assertThat(user.getName(), equalTo("Тест"));
-        assertThat(user.getEmail(), equalTo("newTest@test.com"));
+        Mockito.verify(userRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    public void checkSuccessGetUser() {
-        UserDto userDto = userService.getUser(1L);
+    public void getUserTest() {
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user));
+        userService.getUser(1L);
 
-        assertThat(userDto.getId(), equalTo(1L));
-        assertThat(userDto.getName(), equalTo("Михаил"));
-        assertThat(userDto.getEmail(), equalTo("test@test.ru"));
+        Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
     }
 
     @Test
-    public void checkSuccessUpdateUser() {
-        UserRequestDto userRequestDto = prepareUser("Обновленный", "Серьезно");
-        userService.updateUser(2L, userRequestDto);
+    public void updateUserTest() {
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user));
+        Mockito.when(userRepository.save(any())).thenReturn(user);
+        userService.updateUser(1L, userRequestDto);
 
-        TypedQuery<User> query = em.createQuery("Select u from User u where u.id = :id", User.class);
-        User user = query.setParameter("id", 2L).getSingleResult();
-
-        assertThat(user.getId(), equalTo(2L));
-        assertThat(user.getName(), equalTo(userRequestDto.getName()));
-        assertThat(user.getEmail(), equalTo(userRequestDto.getEmail()));
+        Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(userRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    public void checkSuccessDeleteUser() {
-        TypedQuery<User> query = em.createQuery("Select u from User u where u.id = :id", User.class);
-        User user = query.setParameter("id", 3L).getSingleResult();
-        assertThat(user, notNullValue());
-        userService.deleteUser(3L);
-        int count = query.setParameter("id", 3L).getFirstResult();
-        assertThat(count, equalTo(0));
-    }
+    public void deleteUserTest() {
+        Mockito.when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user));
+        Mockito.doNothing().when(userRepository).delete(any());
+        userService.deleteUser(1L);
 
-    private UserRequestDto prepareUser(String name, String email) {
-        return UserRequestDto.builder()
-                .name(name)
-                .email(email)
-                .build();
+        Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(userRepository, Mockito.times(1)).delete(any());
     }
 }

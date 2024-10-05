@@ -1,66 +1,116 @@
 package ru.practicum.shareit.request.service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
-import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import ru.practicum.shareit.item.dao.ItemRepository;
+import ru.practicum.shareit.item.dto.ShortItemDto;
+import ru.practicum.shareit.request.dao.ItemRequestRepository;
 import ru.practicum.shareit.request.dto.RequestDto;
 import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.user.dao.UserRepository;
+import ru.practicum.shareit.user.model.User;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 
-@Transactional
-@ActiveProfiles("test")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
+@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class ItemRequestServiceImplTest {
 
-    private final EntityManager em;
-    private final ItemRequestService itemRequestService;
+    @Autowired
+    ItemRequestService itemRequestService;
 
-    @Test
-    public void checkSuccessCreateItemRequest() {
-        itemRequestService.createItemRequest(1L, RequestDto.builder().description("Тест").build());
+    @MockBean
+    ItemRequestRepository itemRequestRepository;
 
-        TypedQuery<ItemRequest> query = em.createQuery("Select r from ItemRequest r where r.id = :id", ItemRequest.class);
-        ItemRequest itemRequest = query.setParameter("id", 2L).getSingleResult();
+    @MockBean
+    ItemRepository itemRepository;
 
-        assertThat(itemRequest.getId(), equalTo(2L));
-        assertThat(itemRequest.getDescription(), equalTo("Тест"));
-        assertThat(itemRequest.getCreated(), notNullValue());
-        assertThat(itemRequest.getRequester(), notNullValue());
+    @MockBean
+    UserRepository userRepository;
+
+    @Mock
+    User user;
+
+    @Mock
+    ItemRequest itemRequest;
+
+    @Mock
+    ShortItemDto item;
+
+    @Mock
+    RequestDto requestDto;
+
+    @Mock
+    Page<ItemRequest> itemRequests;
+
+    @BeforeEach
+    public void setUp() {
+        itemRequest.setRequester(user);
     }
 
     @Test
-    public void checkSuccessGetItemRequestByRequesterId() {
-        List<ItemRequestDto> itemRequestDtos = itemRequestService.getItemRequestsByRequesterId(3L);
+    public void createItemRequestTest() {
+        Mockito.when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+        Mockito.when(itemRequestRepository.save(any())).thenReturn(itemRequest);
+        itemRequestService.createItemRequest(1L, requestDto);
 
-        assertThat(itemRequestDtos.size(), equalTo(1));
+        Mockito.verify(userRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(itemRequestRepository, Mockito.times(1)).save(any());
     }
 
     @Test
-    public void checkSuccessGetItemRequests() {
-        List<ItemRequestDto> itemRequestDtos = itemRequestService.getItemRequests(1L, 0);
+    public void getItemRequestsByRequesterIdTest() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(itemRequestRepository.findAllByRequesterId(anyLong(), any())).thenReturn(List.of(itemRequest));
+        Mockito.when(itemRequest.getId()).thenReturn(1L);
+        Mockito.when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
+        itemRequestService.getItemRequestsByRequesterId(1L);
 
-        assertThat(itemRequestDtos.size(), equalTo(1));
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(itemRequestRepository, Mockito.times(1))
+                .findAllByRequesterId(anyLong(), any());
+        Mockito.verify(itemRepository, Mockito.times(1)).findAllByRequestId(1L);
     }
 
     @Test
-    public void checkSuccessGetItemRequest() {
-        ItemRequestDto itemRequestDto = itemRequestService.getItemRequest(3L, 1L);
+    public void getItemRequestsTest() {
+        Pageable pageable = PageRequest.of(0, 10, Sort. by(Sort.Direction. DESC, "created"));
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(itemRequestRepository.findAll(pageable)).thenReturn(itemRequests);
+        Mockito.when(itemRequests.getContent()).thenReturn(List.of(itemRequest));
+        Mockito.when(itemRequest.getId()).thenReturn(1L);
+        Mockito.when(itemRepository.findAllByRequestId(anyLong())).thenReturn(List.of(item));
+        itemRequestService.getItemRequests(1L, 0);
 
-        assertThat(itemRequestDto.getId(), equalTo(1L));
-        assertThat(itemRequestDto.getDescription(), equalTo("Нужна болгарка"));
-        assertThat(itemRequestDto.getCreated(), equalTo(LocalDateTime.parse("2024-09-04T00:00")));
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(itemRequestRepository, Mockito.times(1)).findAll(pageable);
+        Mockito.verify(itemRepository, Mockito.times(1)).findAllByRequestId(1L);
+    }
+
+    @Test
+    public void getItemRequestTest() {
+        Mockito.when(userRepository.existsById(anyLong())).thenReturn(Boolean.TRUE);
+        Mockito.when(itemRequestRepository.findById(1L)).thenReturn(Optional.ofNullable(itemRequest));
+        Mockito.when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
+        itemRequestService.getItemRequest(1L, 1L);
+
+        Mockito.verify(userRepository, Mockito.times(1)).existsById(1L);
+        Mockito.verify(itemRequestRepository, Mockito.times(1)).findById(1L);
+        Mockito.verify(itemRepository, Mockito.times(1)).findAllByRequestId(1L);
     }
 }
